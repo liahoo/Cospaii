@@ -3,14 +3,14 @@ package com.fascode.templates
 import io.ktor.html.*
 import kotlinx.html.*
 
-class SwitcherTemplate() : Template<UL> {
-    val selectedItem = Placeholder<A>()
-    val item = PlaceholderList<UL, FlowContent>()
+class SwitcherTemplate : Template<UL> {
+    val switcherSelected = Placeholder<A>()
+    val switcherItem = PlaceholderList<UL, LI>()
     override fun UL.apply() {
         li("switcher dropdown-show") {
-            a(classes = "arrow-toggle") { insert(selectedItem) }
+            a(classes = "arrow-toggle") { insert(switcherSelected) }
             ul("dropdown-nav") {
-                each(item) {
+                each(switcherItem) {
                     li {
                         insert(it)
                     }

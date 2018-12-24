@@ -6,6 +6,7 @@ import kotlinx.html.*
 class SearchRowTemplate: Template<DIV> {
     val miniCartBody = Placeholder<DIV>()
     val count = Placeholder<SUP>()
+    var textInput:String? = null
     override fun DIV.apply() {
         div("container") {
             div("row") {
@@ -15,7 +16,9 @@ class SearchRowTemplate: Template<DIV> {
                     }
                 }
                 div("col-8 col-md-7 col- m-auto ") {
-                    insert(SearchBoxTemplate()) {}
+                    insert(SearchBoxTemplate()) {
+                        inputValue = textInput
+                    }
                 }
                 div("col-12 col-md-3 col-xl-2 m-auto text-center text-lg-right mt-xs-15") {
                     div("minicart-wrapper") {

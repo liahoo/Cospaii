@@ -1,6 +1,8 @@
 package com.cospaii
 
+import com.cospaii.pages.AccountPage
 import com.cospaii.pages.IndexPage
+import com.cospaii.pages.WishListPage
 import io.ktor.application.*
 import io.ktor.routing.*
 import io.ktor.http.*
@@ -15,11 +17,22 @@ fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 fun Application.module(testing: Boolean = false) {
     routing {
         get("/") {
-            call.respondHtmlTemplate(IndexPage(), status = HttpStatusCode.OK ){
+            call.respondHtmlTemplate(IndexPage()){
 
             }
         }
 
+        get("/MyAccount") {
+            call.respondHtmlTemplate(AccountPage()) {
+
+            }
+        }
+
+        get("/WishList") {
+            call.respondHtmlTemplate(WishListPage()) {
+
+            }
+        }
         get("/html-dsl") {
             call.respondHtml {
                 body {

@@ -1,4 +1,4 @@
-package com.fascode.Models
+package com.cospaii.models
 
 data class CartItem(
     val title: String,

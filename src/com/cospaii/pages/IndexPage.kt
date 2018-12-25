@@ -5,7 +5,10 @@ import com.cospaii.views.HeaderView
 import com.fascode.templates.HeadTemplate
 import io.ktor.html.Template
 import io.ktor.html.insert
-import kotlinx.html.*
+import kotlinx.html.HTML
+import kotlinx.html.body
+import kotlinx.html.head
+import kotlinx.html.title
 
 class IndexPage: Template<HTML> {
     override fun HTML.apply() {

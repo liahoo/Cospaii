@@ -3,12 +3,18 @@ package com.cospaii
 import com.cospaii.pages.AccountPage
 import com.cospaii.pages.IndexPage
 import com.cospaii.pages.WishListPage
-import io.ktor.application.*
-import io.ktor.routing.*
-import io.ktor.http.*
-import io.ktor.html.*
-import kotlinx.html.*
-import io.ktor.http.content.*
+import io.ktor.application.Application
+import io.ktor.application.call
+import io.ktor.html.respondHtml
+import io.ktor.html.respondHtmlTemplate
+import io.ktor.http.content.resources
+import io.ktor.http.content.static
+import io.ktor.routing.get
+import io.ktor.routing.routing
+import kotlinx.html.body
+import kotlinx.html.h1
+import kotlinx.html.li
+import kotlinx.html.ul
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 

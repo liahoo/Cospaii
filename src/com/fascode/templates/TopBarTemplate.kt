@@ -1,6 +1,8 @@
 package com.fascode.templates
 
-import io.ktor.html.*
+import io.ktor.html.Placeholder
+import io.ktor.html.Template
+import io.ktor.html.insert
 import kotlinx.html.*
 
 class TopBarTemplate: Template<FlowContent> {

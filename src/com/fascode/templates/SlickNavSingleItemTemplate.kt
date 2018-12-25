@@ -1,4 +1,4 @@
-package com.cospaii.com.fascode.templates
+package com.fascode.templates
 
 import io.ktor.html.Placeholder
 import io.ktor.html.Template

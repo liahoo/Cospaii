@@ -1,13 +1,12 @@
-package com.cospaii.com.fascode.templates
+package com.fascode.templates
 
 import io.ktor.html.Placeholder
 import io.ktor.html.Template
-import io.ktor.html.TemplatePlaceholder
 import io.ktor.html.insert
 import kotlinx.html.*
 
 class SlickNavTemplate :Template<DIV>{
-    val navMenu = Placeholder<UL>()
+    val slick_nav_menu = Placeholder<UL>()
     override fun DIV.apply() {
         div("slicknav_menu") {
             a(classes = "slicknav_btn slicknav_collapsed", href = "#") {
@@ -16,9 +15,9 @@ class SlickNavTemplate :Template<DIV>{
                 role = "button"
                 span("slicknav_menutxt")
                 span("slicknav_icon slicknav_no-text") {
-                    span("slicknav_icon")
-                    span("slicknav_icon")
-                    span("slicknav_icon")
+                    span("slicknav_icon-bar")
+                    span("slicknav_icon-bar")
+                    span("slicknav_icon-bar")
                 }
             }
             nav("slicknav_nav slicknav_hidden") {
@@ -26,7 +25,7 @@ class SlickNavTemplate :Template<DIV>{
                 role = "menu"
                 style = "display: none;"
                 ul("main-navbar clearfix") {
-                    insert(navMenu)
+                    insert(slick_nav_menu)
                 }
             }
         }

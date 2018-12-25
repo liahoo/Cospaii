@@ -1,4 +1,4 @@
-package com.cospaii.com.cospaii.models
+package com.cospaii.models
 
 class LinkText {
 }

@@ -1,26 +1,19 @@
-package com.cospaii.com.fascode.templates
+package com.fascode.templates
 
-import io.ktor.html.PlaceholderList
-import io.ktor.html.Template
-import io.ktor.html.each
-import io.ktor.html.insert
+import io.ktor.html.*
 import kotlinx.html.*
 
 class CategoryListTemplate: Template<DIV> {
-    val item = PlaceholderList<UL, FlowContent>()
+    val cat_menu = Placeholder<UL>()
     override fun DIV.apply() {
-        div("categories-list-wrap") {
-            div("slicknav_menu") {
-
-            }
-            button(classes = "btn btn-category d-none d-lg-inline-block") {
-                i("fa fa-bars")
-            }
-            ul("category-list-menu") {
-                each(item) {
-                    li {
-                        insert(it)
-                    }
+        div("col-10 col-lg-3") {
+            div("categories-list-wrap") {
+                button(classes = "btn btn-category d-none d-lg-inline-block") {
+                    i("fa fa-bars")
+                    text(R.getString("Categories"))
+                }
+                ul("category-list-menu") {
+                    insert(cat_menu)
                 }
             }
         }

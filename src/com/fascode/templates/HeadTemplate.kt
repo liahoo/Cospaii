@@ -1,7 +1,10 @@
 package com.fascode.templates
 
 import io.ktor.html.Template
-import kotlinx.html.*
+import kotlinx.html.HEAD
+import kotlinx.html.link
+import kotlinx.html.meta
+import kotlinx.html.script
 
 class HeadTemplate: Template<HEAD> {
     override fun HEAD.apply() {

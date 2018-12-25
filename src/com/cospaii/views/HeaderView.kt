@@ -1,8 +1,7 @@
 package com.cospaii.views
 
-import com.cospaii.com.cospaii.controllers.NavBar
-import com.cospaii.com.cospaii.controllers.R
-import com.cospaii.com.fascode.templates.*
+import com.cospaii.controllers.MenuController.categories
+import com.fascode.templates.R
 import com.cospaii.models.CartItem
 import com.fascode.templates.*
 import io.ktor.html.Template
@@ -96,54 +95,86 @@ class HeaderView: Template<HtmlBlockTag> {
             }
             div("navigation-area") {
                 id = "fixheader"
-                insert(SlickNavTemplate()) {
-                    navMenu {
-                        insert(SlickNavCollapseItemTemplate()) {
-                            parent {
-                                +(NavBar.clothes.first)
-                            }
-                            NavBar.clothesChildren.forEach { child ->
-                                subItem {
-                                    attributes.put("href", child.second)
-                                    text(child.first)
-                                }
-                            }
-                        }
-                        insert(SlickNavCollapseItemTemplate()) {
-                            parent {
-                                attributes.put("href", NavBar.electronics.second)
-                                text(NavBar.electronics.first)
-                            }
-                            NavBar.electronicsChildren.forEach { child ->
-                                subItem {
-                                    attributes.put("href", child.second)
-                                    text(child.first)
-                                }
-                            }
-                        }
-                        insert(SlickNavSingleItemTemplate()) {
-                            item {
-                                attributes.put("href", NavBar.wallets.second)
-                                text(NavBar.wallets.first)
-                            }
-                        }
-                    }
-                }
+//                insert(SlickNavTemplate()) {
+//                    slick_nav_menu {
+//                        insert(SlickNavCollapseItemTemplate()) {
+//                            parent {
+//                                +(NavBar.clothes.first)
+//                            }
+//                            NavBar.clothesChildren.forEach { child ->
+//                                subItem {
+//                                    attributes.put("href", child.second)
+//                                    text(child.first)
+//                                }
+//                            }
+//                        }
+//                        insert(SlickNavCollapseItemTemplate()) {
+//                            parent {
+//                                attributes.put("href", NavBar.electronics.second)
+//                                text(NavBar.electronics.first)
+//                            }
+//                            NavBar.electronicsChildren.forEach { child ->
+//                                subItem {
+//                                    attributes.put("href", child.second)
+//                                    text(child.first)
+//                                }
+//                            }
+//                        }
+//                        insert(SlickNavSingleItemTemplate()) {
+//                            item {
+//                                attributes.put("href", NavBar.wallets.second)
+//                                text(NavBar.wallets.first)
+//                            }
+//                        }
+//                    }
+//                }
 
                 div("container") {
                     div("row") {
-                        div("col-10 col-lg-3") {
-//                            insert(CategoryListTemplate()) {
-//
-//                            }
+                        insert(CategoryListTemplate()) {
+                            cat_menu {
+                                categories.forEach { cat ->
+                                    insert(CategoryItemTemplate()) {
+                                        category {
+                                            href = cat.href
+                                            img(alt = "Compute", src = "assets/img/icons/desktop.png")
+                                            text(cat.name)
+                                        }
+                                        cat.subCategories?.forEach { mid ->
+                                            subCategory {
+                                                mid_item {
+                                                    href = mid.href
+                                                    text(mid.name)
+                                                }
+                                                mid.subCategories?.forEach { low ->
+                                                    low_item {
+                                                        href = low.href
+                                                        text(low.name)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                         div("col-2 col-lg-9 d-none d-lg-block") {
-//                            insert(MainMenuTemplate()) {
-//
-//                            }
+                            insert(NavMenuTemplate()) {
+                                main_menu {
+                                    li {
+                                        a {
+                                            +"main item 1"
+                                        }
+                                    }
+                                    li {
+                                        a {
+                                            +"main item 2"
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-
                 }
             }
         }

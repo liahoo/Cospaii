@@ -1,4 +1,4 @@
-package com.cospaii.com.cospaii.controllers
+package com.fascode.templates
 
 import java.util.*
 
@@ -11,6 +11,6 @@ object R {
         } catch (e: Exception) {
             e.printStackTrace()
         }
-        return ""
+        return key
     }
 }

@@ -1,6 +1,5 @@
 package com.fascode.templates
 
-import io.ktor.html.Placeholder
 import io.ktor.html.Template
 import kotlinx.html.*
 

@@ -3,17 +3,17 @@ package com.cospaii.controllers
 import com.fascode.templates.R
 
 object NavBar {
-    val home = Pair(R.getString("home"), "/")
-    val phone = Pair(R.getString("phone"), "/phone")
-    val tablet = Pair(R.getString("tablet"), "/tablet")
-    val laptop = Pair(R.getString("laptop"), "/laptop")
-    val clothes = Pair(R.getString("clothes"), "/clothes")
-    val mens = Pair(R.getString("mens"), "/clothes/mens")
-    val ladies = Pair(R.getString("ladies"), "/clothes/mens")
-    val kids = Pair(R.getString("kids"), "/clothes/kids")
-    val toys = Pair(R.getString("toys"), "/toys")
-    val wallets = Pair(R.getString("wallets"), "/wallets")
-    val electronics = Pair(R.getString("electronics"), "/electronics")
+    val home = Pair(R.getString("Home"), "/")
+    val phone = Pair(R.getString("Phone"), "/Phone")
+    val tablet = Pair(R.getString("Tablet"), "/Tablet")
+    val laptop = Pair(R.getString("Laptop"), "/Laptop")
+    val clothes = Pair(R.getString("Clothes"), "/Clothes")
+    val mens = Pair(R.getString("Mens"), "/Clothes/Mens")
+    val ladies = Pair(R.getString("Ladies"), "/Clothes/Mens")
+    val kids = Pair(R.getString("Kids"), "/Clothes/Kids")
+    val toys = Pair(R.getString("Toys"), "/Toys")
+    val wallets = Pair(R.getString("Wallets"), "/Wallets")
+    val electronics = Pair(R.getString("Electronics"), "/Electronics")
     val clothesChildren = arrayOf(mens, ladies, kids)
     val electronicsChildren = arrayOf(phone, tablet, laptop)
 }

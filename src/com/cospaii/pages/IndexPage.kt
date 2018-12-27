@@ -4,6 +4,7 @@ import com.cospaii.views.HeaderMiddleArea
 import com.cospaii.models.CartItem
 import com.cospaii.views.HeaderTopArea
 import com.cospaii.views.HeaderNavigationArea
+import com.cospaii.views.SlideArea
 import com.fascode.templates.HeadTemplate
 import io.ktor.html.Template
 import io.ktor.html.insert
@@ -29,6 +30,9 @@ class IndexPage: Template<HTML> {
                 }
                 insert(HeaderNavigationArea()) {
                 }
+            }
+            insert(SlideArea()){
+
             }
         }
     }

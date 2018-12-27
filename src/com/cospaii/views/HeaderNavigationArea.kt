@@ -52,7 +52,7 @@ class HeaderNavigationArea: Template<FlowContent> {
                         div("main-menu-wrap") {
                             nav("mainmenu") {
                                 ul("main-navbar clearfix") {
-                                    navItems.forEach { topItem ->
+                                    navItems.forEach { topItem -> // [Home, New, Hot, Sales]
                                         if (!topItem.hasChildren) {
                                             li {
                                                 a {
@@ -62,17 +62,22 @@ class HeaderNavigationArea: Template<FlowContent> {
                                             }
                                         } else { // If Nav item has children
                                             li("dropdown-show") {
+                                                /* Show [New, Hot, Sales] */
                                                 a(href = topItem.href, classes = "arrow-toggle") {
                                                     +(topItem.name)
                                                 }
-                                                topItem.children?.forEach { midItem ->
-                                                    insert(NavItemGroupTemplate()) {
+                                                /* Show [Electronics, Clothes] */
+                                                insert(NavItemGroupTemplate()) {
+                                                    // Loop [Electronics, Clothes]
+                                                    topItem.children?.forEach { midItem ->
                                                         groupItem {
                                                             parent {
+                                                                /* Show [Phone, Tablet], [Men's, Ladies'] */
                                                                 href = midItem.href
                                                                 +(midItem.name)
                                                             }
                                                             midItem.children?.forEach { lowItem ->
+                                                                /* Show [Phone, Tablet], [Men's, Ladies'] */
                                                                 item {
                                                                     href = lowItem.href
                                                                     +(lowItem.name)

@@ -8,13 +8,7 @@ import io.ktor.html.insert
 import kotlinx.html.*
 
 class SlideArea: Template<FlowContent> {
-    val slideItems = arrayOf(
-        SlideItem("Title 1", "", "Secondary 1", "Third 1", R.getString("See More"), "#" ),
-        SlideItem("Title 2", "slide-item_2", "Secondary 1", "Third 1", R.getString("See More"), "#"),
-        SlideItem("Title 3", "slide-item_3", "Secondary 1", "Third 1", R.getString("See More"), "#"),
-        SlideItem("Title 4", "slide-item_4", "Secondary 1", "Third 1", R.getString("See More"), "#")
-
-    )
+    var slideItems: Array<SlideItem> = emptyArray()
     override fun FlowContent.apply() {
         div("slider-area-wrap") {
             div("home-slider-carousel owl-carousel") {

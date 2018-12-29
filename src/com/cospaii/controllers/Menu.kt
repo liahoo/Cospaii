@@ -10,15 +10,15 @@ object Menu {
     val currencySelected: String = "USD"
     val currencies: Array<String> = arrayOf("USD", "JPY", "RMB")
     val categories = arrayOf(
-        MenuItem(R.getString("pc"), "/pc", null, arrayOf(
-            MenuItem(R.getString("note_pc"), "/pc/note", null, arrayOf(
+        MenuItem(R.getString("PC"), "/pc", null, arrayOf(
+            MenuItem(R.getString("Note PC"), "/pc/note", null, arrayOf(
                 MenuItem(R.getString("Note PC"), "/pc/note/cables"),
                 MenuItem(R.getString("Cables"), "/pc/note/cables"),
                 MenuItem(R.getString("Power"), "/pc/note/cpu"),
                 MenuItem(R.getString("Sticker"), "/pc/note/cpu"),
                 MenuItem(R.getString("All"), "/pc/note/all")
                 )),
-            MenuItem(R.getString("desktop_pc"), "/pc/desktop", null, arrayOf(
+            MenuItem(R.getString("Desktop"), "/pc/desktop", null, arrayOf(
                 MenuItem(R.getString("CPU"), "/pc/desktop/cpu"),
                 MenuItem(R.getString("SSD"), "/pc/desktop/ssd"),
                 MenuItem(R.getString("Mouse"), "/pc/desktop/mouse"),

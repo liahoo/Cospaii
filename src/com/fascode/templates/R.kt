@@ -9,7 +9,7 @@ object R {
         try {
             return getResources().getString(key)
         } catch (e: Exception) {
-            e.printStackTrace()
+//            e.printStackTrace()
         }
         return key
     }

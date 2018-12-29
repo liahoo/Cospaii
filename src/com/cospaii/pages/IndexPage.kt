@@ -1,10 +1,9 @@
 package com.cospaii.pages
 
-import com.cospaii.views.HeaderMiddleArea
-import com.cospaii.models.CartItem
-import com.cospaii.views.HeaderTopArea
-import com.cospaii.views.HeaderNavigationArea
-import com.cospaii.views.SlideArea
+import com.cospaii.controllers.CartService
+import com.cospaii.controllers.SlideService
+import com.cospaii.controllers.TabService
+import com.cospaii.views.*
 import com.fascode.templates.HeadTemplate
 import io.ktor.html.Template
 import io.ktor.html.insert
@@ -22,17 +21,16 @@ class IndexPage: Template<HTML> {
                 insert(HeaderTopArea()) {
                 }
                 insert(HeaderMiddleArea()) {
-                    cartItems = listOf(
-                        CartItem("items 1", "$100", 2, "assets/img/product-1.jpg", "/detail/1"),
-                        CartItem("items 2", "$100", 1, "assets/img/product-2.jpg", "/detail/2"),
-                        CartItem("items 3", "$100", 3, "assets/img/product-3.jpg", "/detail/3")
-                    )
+                    cartItems = CartService.getCartItems()
                 }
                 insert(HeaderNavigationArea()) {
                 }
             }
             insert(SlideArea()){
-
+                slideItems = SlideService.getSlideItems()
+            }
+            insert(ProductArea()) {
+                appTabPanes = TabService.getTabPanes()
             }
         }
     }

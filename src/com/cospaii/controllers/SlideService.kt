@@ -1,7 +1,7 @@
 package com.cospaii.controllers
 
 import com.cospaii.models.SlideItem
-import com.fascode.templates.R
+import com.cospaii.templates.R
 
 object SlideService {
     fun getSlideItems(): Array<SlideItem> {

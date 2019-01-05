@@ -1,6 +1,6 @@
 package com.cospaii.controllers
 
-import com.fascode.templates.R
+import com.cospaii.templates.R
 
 object NavBar {
     val home = Pair(R.getString("Home"), "/")

@@ -11,7 +11,7 @@ buildscript {
 apply plugin: 'kotlin'
 apply plugin: 'application'
 
-group 'store'
+group 'admin'
 version '0.0.1'
 mainClassName = "io.ktor.server.netty.EngineMain"
 
@@ -30,12 +30,10 @@ repositories {
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-    compile 'org.jetbrains.exposed:exposed:0.11.2'
     compile "io.ktor:ktor-server-netty:$ktor_version"
     compile "ch.qos.logback:logback-classic:$logback_version"
     compile "io.ktor:ktor-server-core:$ktor_version"
     compile "io.ktor:ktor-html-builder:$ktor_version"
-    compile "io.ktor:ktor-server-host-common:$ktor_version"
-    compile "dao:dao-connector-java:5.1.46"
+    compile "io.ktor:ktor-server-sessions:$ktor_version"
     testCompile "io.ktor:ktor-server-tests:$ktor_version"
 }

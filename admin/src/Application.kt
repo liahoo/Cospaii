@@ -1,36 +1,116 @@
-package com.cospaii
+package com.cospaii.admin
 
+import com.cospaii.admin.db.*
 import com.cospaii.admin.pages.LoginPage
+import com.cospaii.templates.R
+import com.sun.org.apache.xml.internal.security.algorithms.SignatureAlgorithm
+import io.jsonwebtoken.Jwts
 import io.ktor.application.*
+import io.ktor.auth.*
 import io.ktor.response.*
-import io.ktor.request.*
 import io.ktor.routing.*
-import io.ktor.http.*
 import io.ktor.html.*
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
+import io.ktor.request.receive
 import kotlinx.html.*
 import io.ktor.sessions.*
+import io.ktor.util.KtorExperimentalAPI
+import io.ktor.util.hex
+import io.ktor.util.url
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
+import sun.misc.BASE64Decoder
+import sun.misc.BASE64Encoder
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.util.*
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
+@KtorExperimentalAPI
 @Suppress("unused") // Referenced in application.conf
 @kotlin.jvm.JvmOverloads
 fun Application.module(testing: Boolean = false) {
+    DbAdmin.init()
+    val cospaiiConfig = environment.config.config("cospaii")
+    val sessionCookieConfig = cospaiiConfig.config("session.cookie")
+    val key: String = sessionCookieConfig.property("key").getString()
+    val sessionkey = hex(key)
+    val secretAuthKey = hex(sessionCookieConfig.property("secretAuthKey").getString())
+    val secretEncryptKey = hex(sessionCookieConfig.property("secretEncryptKey").getString())
+    val sessionTransformer = SessionTransportTransformerEncrypt(secretEncryptKey, secretAuthKey)
     install(Sessions) {
-        cookie<MySession>("MY_SESSION") {
-            cookie.extensions["SameSite"] = "lax"
+        cookie<LoginSession>(LoginSession.sessionName) {
+//            cookie.domain = "admin.cospaii.com"
+            cookie.path = "/"
+        }
+        cookie<String>("ACCESS_TOKEN") {
+//            cookie.domain = "admin.cospaii.com"
+            cookie.path = "/"
+            transform(sessionTransformer)
         }
     }
-
-    routing {
-        get("/") {
-            call.respondText("HELLO WORLD!", contentType = ContentType.Text.Plain)
+    install(Authentication) {
+        form("adminLoginAuth") {
+            userParamName = "username"
+            passwordParamName = "password"
+            challenge = FormAuthChallenge.Redirect{ "Login Failed" }
+            validate { userPasswordCredential ->
+                transaction {
+                    AdminEntity.find {
+                        Admins.username.eq(userPasswordCredential.name) and
+                                Admins.password.eq(BASE64Encoder().encode(userPasswordCredential.password.toByteArray()))
+                    }.takeIf { it.count() > 0 }?.first()
+                }
+            }
         }
+        session<LoginSession>("sessionAuth") {
+            challenge = SessionAuthChallenge.Redirect { "/Login" }
+            validate {
+                val loginSession = sessions.get<LoginSession>()
+                request.cookies["ACCESS_TOKEN"]?.takeIf {
+                    loginSession?.username?.equals(sessionTransformer.transformRead(it)) ?: false
+                }?.let {
+                    loginSession
+                }
+            }
 
-        get("/login") {
+        }
+    }
+    routing {
+        get("/Login") {
             call.respondHtmlTemplate(LoginPage()){
-
+            }
+        }
+        authenticate("sessionAuth") {
+            get("/") {
+                call.principal<LoginSession>()?.let { loginSession ->
+                    val nickname = loginSession.nickname
+                    call.respondHtml {
+                        body {
+                            div {
+                                h2 {
+                                    +("Hello $nickname")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        authenticate("adminLoginAuth") {
+            post("/LoginCheck") {
+                call.principal<AdminEntity>()?.let { adm ->
+                    call.sessions.set(
+                        LoginSession(
+                            username = adm.username,
+                            nickname = adm.nickname))
+                    call.sessions.set("ACCESS_TOKEN", adm.username)
+                    call.respondRedirect("/")
+                } ?: call.respond("Invalid Username or Password!")
             }
         }
         get("/html-dsl") {
@@ -46,11 +126,6 @@ fun Application.module(testing: Boolean = false) {
             }
         }
 
-        get("/session/increment") {
-            val session = call.sessions.get<MySession>() ?: MySession()
-            call.sessions.set(session.copy(count = session.count + 1))
-            call.respondText("Counter is ${session.count}. Refresh to increment.")
-        }
         static("/html") {
             resources("static")
         }
@@ -62,5 +137,11 @@ fun Application.module(testing: Boolean = false) {
     }
 }
 
-data class MySession(val count: Int = 0)
+data class LoginSession(val username: String, val nickname: String?): Principal{
+    companion object {
+        val sessionName = "LOGIN_SESSION"
+    }
+}
+data class AccessToken(val token: String): Principal{
 
+}

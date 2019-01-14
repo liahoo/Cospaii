@@ -10,23 +10,28 @@ import io.ktor.auth.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.html.*
+import io.ktor.http.Cookie
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
 import io.ktor.request.receive
 import kotlinx.html.*
 import io.ktor.sessions.*
 import io.ktor.util.KtorExperimentalAPI
+import io.ktor.util.date.GMTDate
 import io.ktor.util.hex
+import io.ktor.util.toLocalDateTime
 import io.ktor.util.url
+import io.netty.handler.codec.base64.Base64Encoder
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.joda.time.DateTime
 import sun.misc.BASE64Decoder
 import sun.misc.BASE64Encoder
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.*
+import java.util.Date
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
@@ -46,8 +51,9 @@ fun Application.module(testing: Boolean = false) {
         cookie<LoginSession>(LoginSession.sessionName) {
 //            cookie.domain = "admin.cospaii.com"
             cookie.path = "/"
+//            transform(sessionTransformer)
         }
-        cookie<String>("ACCESS_TOKEN") {
+        cookie<AccessToken>("ACCESS_TOKEN") {
 //            cookie.domain = "admin.cospaii.com"
             cookie.path = "/"
             transform(sessionTransformer)
@@ -71,10 +77,18 @@ fun Application.module(testing: Boolean = false) {
             challenge = SessionAuthChallenge.Redirect { "/Login" }
             validate {
                 val loginSession = sessions.get<LoginSession>()
-                request.cookies["ACCESS_TOKEN"]?.takeIf {
-                    loginSession?.username?.equals(sessionTransformer.transformRead(it)) ?: false
-                }?.let {
+                // Is AccessToken passed?
+                if(loginSession?.access_token?.let {
+                    sessionTransformer.transformRead(it)?.equals(loginSession.username)
+                } == true) {
                     loginSession
+                }else {
+                    null
+//                    request.cookies["CLIENT_TOKEN"]?.let {
+//                        loginSession?.uid?.equals(sessionTransformer.transformRead(it)) ?: false
+//                    }?.let {
+//                        loginSession
+//                    }
                 }
             }
 
@@ -104,11 +118,33 @@ fun Application.module(testing: Boolean = false) {
         authenticate("adminLoginAuth") {
             post("/LoginCheck") {
                 call.principal<AdminEntity>()?.let { adm ->
-                    call.sessions.set(
-                        LoginSession(
-                            username = adm.username,
-                            nickname = adm.nickname))
-                    call.sessions.set("ACCESS_TOKEN", adm.username)
+                    val createTime = DateTime()
+                    val serverToken = createTime.millis.toString()
+                    val clientToken = BASE64Encoder().encode(serverToken.toByteArray())
+                    val accessToken = sessionTransformer.transformWrite(adm.username)
+
+                    transaction {
+                        AdminExtras.deleteWhere { AdminExtras.username.eq(adm.username) }
+                        AdminExtras.insert {
+                            it[username] = adm.username
+                            it[create_time] = createTime
+                            it[auth_token] = serverToken
+                        }
+                    }
+                    call.response.cookies.appendExpired(name = "CLIENT_TOKEN", path = "/")
+                    call.response.cookies.append(Cookie(
+                        name = "CLIENT_TOKEN",
+                        path = "/",
+                        value = clientToken,
+                        expires = GMTDate(createTime.plusDays(30).millis))
+                    )
+                    call.sessions.clear(LoginSession.sessionName)
+                    call.sessions.set(LoginSession(
+                        uid = adm.id.value,
+                        username = adm.username,
+                        nickname = adm.nickname,
+                        access_token = accessToken)
+                    )
                     call.respondRedirect("/")
                 } ?: call.respond("Invalid Username or Password!")
             }
@@ -137,11 +173,13 @@ fun Application.module(testing: Boolean = false) {
     }
 }
 
-data class LoginSession(val username: String, val nickname: String?): Principal{
+data class LoginSession(val uid: Int, val username: String, val access_token: String, val nickname: String? ): Principal{
     companion object {
         val sessionName = "LOGIN_SESSION"
     }
 }
 data class AccessToken(val token: String): Principal{
-
+    companion object {
+        val sessionName = "CLIENT_TOKEN"
+    }
 }

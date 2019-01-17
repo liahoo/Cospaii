@@ -1,10 +1,9 @@
 package com.cospaii.admin
 
 import com.cospaii.admin.db.*
+import com.cospaii.admin.pages.DataEditPage
 import com.cospaii.admin.pages.LoginPage
 import com.cospaii.templates.R
-import com.sun.org.apache.xml.internal.security.algorithms.SignatureAlgorithm
-import io.jsonwebtoken.Jwts
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.response.*
@@ -13,25 +12,19 @@ import io.ktor.html.*
 import io.ktor.http.Cookie
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
-import io.ktor.request.receive
+import io.ktor.request.uri
 import kotlinx.html.*
 import io.ktor.sessions.*
 import io.ktor.util.KtorExperimentalAPI
 import io.ktor.util.date.GMTDate
 import io.ktor.util.hex
-import io.ktor.util.toLocalDateTime
 import io.ktor.util.url
-import io.netty.handler.codec.base64.Base64Encoder
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
-import sun.misc.BASE64Decoder
 import sun.misc.BASE64Encoder
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.util.*
-import java.util.Date
+import java.net.URLDecoder
+import java.net.URLEncoder
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
@@ -53,7 +46,7 @@ fun Application.module(testing: Boolean = false) {
             cookie.path = "/"
 //            transform(sessionTransformer)
         }
-        cookie<AccessToken>("ACCESS_TOKEN") {
+        cookie<ClientToken>(ClientToken.sessionName) {
 //            cookie.domain = "admin.cospaii.com"
             cookie.path = "/"
             transform(sessionTransformer)
@@ -74,21 +67,18 @@ fun Application.module(testing: Boolean = false) {
             }
         }
         session<LoginSession>("sessionAuth") {
-            challenge = SessionAuthChallenge.Redirect { "/Login" }
+            challenge = SessionAuthChallenge.Redirect { "/Login?cb=${URLEncoder.encode(request.uri.toString(), "UTF-8")}" }
             validate {
                 val loginSession = sessions.get<LoginSession>()
-                // Is AccessToken passed?
-                if(loginSession?.access_token?.let {
-                    sessionTransformer.transformRead(it)?.equals(loginSession.username)
-                } == true) {
-                    loginSession
-                }else {
-                    null
-//                    request.cookies["CLIENT_TOKEN"]?.let {
-//                        loginSession?.uid?.equals(sessionTransformer.transformRead(it)) ?: false
-//                    }?.let {
-//                        loginSession
-//                    }
+                // Is ClientToken passed?
+                loginSession?.access_token?.let {
+                    sessionTransformer.transformRead(it)?.split(",")?.takeIf {it.size >= 2}?.let {
+                        try {
+                            AuthenticatedUser(it[0].toInt(), it[1], it[2].toInt(), loginSession.nickname)
+                        }catch (e: NumberFormatException){
+                            null
+                        }
+                    }
                 }
             }
 
@@ -97,12 +87,14 @@ fun Application.module(testing: Boolean = false) {
     routing {
         get("/Login") {
             call.respondHtmlTemplate(LoginPage()){
+                if(call.request.queryParameters["err"] == "1")
+                textError = R.getString(R.invalid_username_or_password)
             }
         }
         authenticate("sessionAuth") {
             get("/") {
-                call.principal<LoginSession>()?.let { loginSession ->
-                    val nickname = loginSession.nickname
+                call.principal<AuthenticatedUser>()?.let { user ->
+                    val nickname = user.nickname
                     call.respondHtml {
                         body {
                             div {
@@ -114,51 +106,48 @@ fun Application.module(testing: Boolean = false) {
                     }
                 }
             }
+            get("/Category") {
+                call.principal<AuthenticatedUser>()?.let { user ->
+                    val nickname = user.nickname
+                    call.respondHtmlTemplate(DataEditPage()) {
+                        textTitle = R.getString(R.create_category)
+                    }
+                }
+            }
+            post("/Category"){
+
+            }
         }
         authenticate("adminLoginAuth") {
             post("/LoginCheck") {
                 call.principal<AdminEntity>()?.let { adm ->
-                    val createTime = DateTime()
-                    val serverToken = createTime.millis.toString()
-                    val clientToken = BASE64Encoder().encode(serverToken.toByteArray())
-                    val accessToken = sessionTransformer.transformWrite(adm.username)
-
+                    val now = DateTime()
+                    val accessToken = sessionTransformer.transformWrite(adm.id.toString() + "," + adm.username + "," + adm.role.toString())
                     transaction {
                         AdminExtras.deleteWhere { AdminExtras.username.eq(adm.username) }
-                        AdminExtras.insert {
-                            it[username] = adm.username
-                            it[create_time] = createTime
-                            it[auth_token] = serverToken
+                        AdminExtras.insert {entry->
+                            entry[username] = adm.username
+                            entry[login_time] = now
                         }
                     }
-                    call.response.cookies.appendExpired(name = "CLIENT_TOKEN", path = "/")
-                    call.response.cookies.append(Cookie(
-                        name = "CLIENT_TOKEN",
-                        path = "/",
-                        value = clientToken,
-                        expires = GMTDate(createTime.plusDays(30).millis))
-                    )
+                    // Write session to cookie for this time login
                     call.sessions.clear(LoginSession.sessionName)
                     call.sessions.set(LoginSession(
-                        uid = adm.id.value,
-                        username = adm.username,
                         nickname = adm.nickname,
                         access_token = accessToken)
                     )
-                    call.respondRedirect("/")
-                } ?: call.respond("Invalid Username or Password!")
-            }
-        }
-        get("/html-dsl") {
-            call.respondHtml {
-                body {
-                    h1 { +"HTML" }
-                    ul {
-                        for (n in 1..10) {
-                            li { +"$n" }
-                        }
+                    call.parameters["cache_days"]?.toInt()?.takeIf { it > 0 }?.let {cache_days ->
+                        val clientToken = sessionTransformer.transformWrite(now.millis.toString())
+                        call.response.cookies.appendExpired(name = "CLIENT_TOKEN", path = "/")
+                        call.response.cookies.append(Cookie(
+                            name = "CLIENT_TOKEN",
+                            path = "/",
+                            value = clientToken,
+                            expires = GMTDate(now.plusDays(cache_days).millis))
+                        )
                     }
-                }
+                    call.respondRedirect(URLDecoder.decode(call.parameters["cb"] ?: "/", "UTF-8"))
+                } ?: call.respondRedirect(call.request.uri + "?err=1")
             }
         }
 
@@ -172,13 +161,14 @@ fun Application.module(testing: Boolean = false) {
 
     }
 }
+data class AuthenticatedUser(val uid: Int, val username: String, val role: Int, val nickname: String?): Principal
 
-data class LoginSession(val uid: Int, val username: String, val access_token: String, val nickname: String? ): Principal{
+data class LoginSession(val access_token: String, val nickname: String? ): Principal{
     companion object {
         val sessionName = "LOGIN_SESSION"
     }
 }
-data class AccessToken(val token: String): Principal{
+data class ClientToken(val token: String): Principal{
     companion object {
         val sessionName = "CLIENT_TOKEN"
     }

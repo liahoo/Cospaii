@@ -9,6 +9,5 @@ import org.jetbrains.exposed.dao.IntEntity
 class AdminExtra(id: EntityID<Int>): IntEntity(id), Principal {
     companion object : EntityClass<Int, AdminExtra>(Admins)
     var username by AdminExtras.username
-    var authToken by AdminExtras.auth_token
-    var create_time by AdminExtras.create_time
+    var login_time by AdminExtras.login_time
 }

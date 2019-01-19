@@ -20,13 +20,6 @@ object DbAdmin {
         transaction {
 //            SchemaUtils.drop(Categories, Admins)
             initTable<Categories>(Categories) {
-                it.insert {
-                    it[id] = EntityID("home", Categories)
-                    it[name] = "Home"
-                    it[href] = "/Category/Home"
-                    it[level] = 0
-                    it[parent_id] = ""
-                }
             }
 
             initTable(AdminExtras) {
@@ -53,7 +46,6 @@ object DbAdmin {
             SchemaUtils.create(table)
             init?.invoke(table)
         } else {
-
 //            SchemaUtils.createMissingTablesAndColumns(table)
         }
     }

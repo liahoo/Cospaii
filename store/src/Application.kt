@@ -1,6 +1,6 @@
 package com.cospaii
 
-import com.cospaii.dao.DbHelper
+import com.cospaii.dao.DbHandler
 import com.cospaii.pages.*
 import io.ktor.application.Application
 import io.ktor.application.call
@@ -16,7 +16,6 @@ fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 @Suppress("unused") // Referenced in application.conf
 @kotlin.jvm.JvmOverloads
 fun Application.module(testing: Boolean = false) {
-    DbHelper.init()
     routing {
         get("/") {
             call.respondHtmlTemplate(IndexPage()){
@@ -37,7 +36,7 @@ fun Application.module(testing: Boolean = false) {
         }
 
         get("/Product/{Id}") {
-            DbHelper.findProductById(call.parameters["Id"])?.let {prod ->
+            DbHandler.findProductById(call.parameters["Id"])?.let { prod ->
                 call.respondHtmlTemplate(ProductPage(prod)) {}
             } ?: call.respondRedirect("/static/404.html")
         }

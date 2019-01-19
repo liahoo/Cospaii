@@ -30,7 +30,7 @@ repositories {
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     compile 'org.jetbrains.exposed:exposed:0.11.2'
-    compile group: 'mysql', name: 'mysql-connector-java', version: '6.0.6'
+    compile "mysql:mysql-connector-java:8.0.13"
     compile "io.ktor:ktor-server-netty:$ktor_version"
     compile "ch.qos.logback:logback-classic:$logback_version"
     testCompile "io.ktor:ktor-server-tests:$ktor_version"

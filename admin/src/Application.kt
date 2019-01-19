@@ -1,8 +1,10 @@
 package com.cospaii.admin
 
 import com.cospaii.admin.db.*
-import com.cospaii.admin.pages.DataEditPage
+import com.cospaii.admin.pages.AddEntityPage
+import com.cospaii.admin.pages.CategoriesPage
 import com.cospaii.admin.pages.LoginPage
+import com.cospaii.dao.Categories
 import com.cospaii.templates.R
 import io.ktor.application.*
 import io.ktor.auth.*
@@ -10,15 +12,18 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.html.*
 import io.ktor.http.Cookie
+import io.ktor.http.Parameters
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
+import io.ktor.request.receiveParameters
 import io.ktor.request.uri
 import kotlinx.html.*
 import io.ktor.sessions.*
 import io.ktor.util.KtorExperimentalAPI
 import io.ktor.util.date.GMTDate
+import io.ktor.util.flattenForEach
 import io.ktor.util.hex
-import io.ktor.util.url
+import org.jetbrains.exposed.dao.EntityID
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
@@ -56,7 +61,13 @@ fun Application.module(testing: Boolean = false) {
         form("adminLoginAuth") {
             userParamName = "username"
             passwordParamName = "password"
-            challenge = FormAuthChallenge.Redirect{ "Login Failed" }
+            challenge = FormAuthChallenge.Redirect {
+                request.uri + if(request.queryParameters.isEmpty()) {
+                    "?err=1"
+                }else{
+                    "&err=1"
+                }
+            }
             validate { userPasswordCredential ->
                 transaction {
                     AdminEntity.find {
@@ -68,13 +79,13 @@ fun Application.module(testing: Boolean = false) {
         }
         session<LoginSession>("sessionAuth") {
             challenge = SessionAuthChallenge.Redirect { "/Login?cb=${URLEncoder.encode(request.uri.toString(), "UTF-8")}" }
-            validate {
+            validate { call ->
                 val loginSession = sessions.get<LoginSession>()
                 // Is ClientToken passed?
-                loginSession?.access_token?.let {
-                    sessionTransformer.transformRead(it)?.split(",")?.takeIf {it.size >= 2}?.let {
+                loginSession?.access_token?.let { token ->
+                    sessionTransformer.transformRead(token)?.split(",")?.takeIf {it.size >= 2}?.let {id_uid_role ->
                         try {
-                            AuthenticatedUser(it[0].toInt(), it[1], it[2].toInt(), loginSession.nickname)
+                            AuthenticatedUser(id_uid_role[0].toInt(), id_uid_role[1], id_uid_role[2].toInt(), loginSession.nickname)
                         }catch (e: NumberFormatException){
                             null
                         }
@@ -87,39 +98,30 @@ fun Application.module(testing: Boolean = false) {
     routing {
         get("/Login") {
             call.respondHtmlTemplate(LoginPage()){
-                if(call.request.queryParameters["err"] == "1")
-                textError = R.getString(R.invalid_username_or_password)
-            }
-        }
-        authenticate("sessionAuth") {
-            get("/") {
-                call.principal<AuthenticatedUser>()?.let { user ->
-                    val nickname = user.nickname
-                    call.respondHtml {
-                        body {
-                            div {
-                                h2 {
-                                    +("Hello $nickname")
-                                }
+                if(call.request.queryParameters["err"] == "1") {
+                    textError = R.invalid_username_or_password
+                }
+                call.request.queryParameters["cb"]?.let {
+                    hrefFormAction = "/Login?cb=$it"
+                }
+                val postParams = StringBuffer()
+                call.request.queryParameters.flattenForEach { key, value ->
+                    when(key) {
+                        "err" -> {
+                            if (value == "1") {
+                                textError = R.invalid_username_or_password
                             }
                         }
+                        else -> { postParams.append("$key=$value") }
                     }
                 }
-            }
-            get("/Category") {
-                call.principal<AuthenticatedUser>()?.let { user ->
-                    val nickname = user.nickname
-                    call.respondHtmlTemplate(DataEditPage()) {
-                        textTitle = R.getString(R.create_category)
-                    }
+                if(postParams.isNotEmpty()){
+                    hrefFormAction = "/Login?$postParams"
                 }
-            }
-            post("/Category"){
-
             }
         }
         authenticate("adminLoginAuth") {
-            post("/LoginCheck") {
+            post("/Login") {
                 call.principal<AdminEntity>()?.let { adm ->
                     val now = DateTime()
                     val accessToken = sessionTransformer.transformWrite(adm.id.toString() + "," + adm.username + "," + adm.role.toString())
@@ -148,6 +150,55 @@ fun Application.module(testing: Boolean = false) {
                     }
                     call.respondRedirect(URLDecoder.decode(call.parameters["cb"] ?: "/", "UTF-8"))
                 } ?: call.respondRedirect(call.request.uri + "?err=1")
+            }
+        }
+
+        authenticate("sessionAuth") {
+            get("/") {
+                call.principal<AuthenticatedUser>()?.let { user ->
+                    val nickname = user.nickname
+                    call.respondHtml {
+                        body {
+                            div {
+                                h2 {
+                                    +("Hello $nickname")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            get("/Categories") {
+                call.principal<AuthenticatedUser>()?.let { user ->
+                    call.respondHtmlTemplate(CategoriesPage()) {
+                    }
+                }
+            }
+            get("/Category/Create") {
+                call.principal<AuthenticatedUser>()?.let { user ->
+                    call.respondHtmlTemplate(object: AddEntityPage(){
+                        override var textTitle: String = R.create_category
+                        override var table: Table = Categories
+                        override var hrefFormAction: String = "/Category/Add"
+                    }){}
+                }
+            }
+            post("/Category/Add"){
+                call.principal<AuthenticatedUser>()?.let { user ->
+                    val postParameters: Parameters = call.receiveParameters()
+                    transaction {
+                        Categories.insert { cat ->
+                            cat[id] = EntityID(postParameters["id"], Categories)
+                            cat[name] = postParameters["name"]!!
+                            cat[href] = postParameters["href"]!!
+                            cat[img_src] = postParameters["img_src"]
+                            cat[level] = postParameters["level"]!!.toInt()
+                            cat[parent_id] = postParameters["parent_id"]!!
+                            cat[index] = postParameters["index"]!!.toInt()
+                        }
+                    }
+                    call.respondRedirect("/Categories")
+                }
             }
         }
 

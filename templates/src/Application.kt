@@ -39,6 +39,9 @@ fun Application.module(testing: Boolean = false) {
             resources("static")
         }
 
+        static("/assets") {
+            resources("assets")
+        }
         install(StatusPages) {
             exception<AuthenticationException> { cause ->
                 call.respond(HttpStatusCode.Unauthorized)
